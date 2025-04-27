@@ -1,0 +1,50 @@
+version: '3.8' # Use 3.8 or higher for build args support generally
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Pass the HF_TOKEN from your environment during build
+        # Example: export HF_TOKEN="hf_YourTokenHere" && docker-compose build
+        - HF_TOKEN=${HF_TOKEN:-} # Use :- to default to empty if not set
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount volumes for runtime data, NOT for models if using built-in ones
+      - ./voices:/app/voices
+      # Mount cache for runtime downloads (like DAC model if not in builder) and other caching
+      - ./cache:/app/cache
+      - ./static:/app/static
+    environment:
+      # --- Runtime Environment Variables ---
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false # Set to true for more logs
+      - ENABLE_CORS=true
+      # HUGGING_FACE_HUB_CACHE: Handled by HF_HOME set in config.py based on CACHE_DIR
+      # MODEL_CACHE_DIR: Replaced by specific model paths in config.py
+      - USE_TORCH_COMPILE=true # Or false based on preference/stability
+      - COMPUTE_DTYPE=float16 # Or bfloat16, float32
+      - OUTPUT_FORMAT=mp3
+      - "MAX_AUDIO_LENGTH_SEC=60"
+      # Optional: Pass token at runtime if needed by DAC download? Unlikely but possible.
+      # - HF_TOKEN=${HF_TOKEN:-}
+      # Set Timezone if needed
+      # - TZ=UTC
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: "all" # Or specify count=1
+              capabilities: [gpu]
+    # Consider adding restart policy
+    # restart: unless-stopped
+    # Consider adding healthcheck (adjust start_period based on model load time)
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+    #   interval: 45s
+    #   timeout: 15s
+    #   retries: 3
+    #   start_period: 120s
