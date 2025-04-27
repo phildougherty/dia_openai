@@ -22,7 +22,7 @@ An OpenAI-compatible API for Dia text-to-speech, providing a drop-in replacement
 1. **Clone the repository**:
 
 ```bash
-git clone https://github.com/yourusername/dia_openai.git
+git clone https://github.com/phildougherty/dia_openai.git
 cd dia_openai
 ```
 
